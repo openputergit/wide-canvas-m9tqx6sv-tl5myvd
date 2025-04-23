@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Sortable.js for drag and drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .category-pill {
+            border-radius: 9999px;
+            padding: 2px 10px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .cat-study { background-color: #e3f2fd; color: #0d47a1; }
+        .cat-practice { background-color: #e8f5e9; color: #1b5e20; }
+        .cat-workout { background-color: #fff3e0; color: #e65100; }
+        .cat-other { background-color: #f3e5f5; color: #4a148c; }
+        
+        .calendar-day {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .calendar-day:hover {
+            transform: scale(1.1);
+        }
+        .day-red {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #d32f2f;
+        }
+        .day-green {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #2e7d32;
+        }
+        
+        .drag-handle {
+            cursor: grab;
+        }
+        
+        .task-item.sortable-ghost {
+            background-color: #e9ecef;
+            opacity: 0.5;
+        }
+
+        /* Custom switch styling */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-6 max-w-5xl">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-center text-gray-800">Study Tracker</h1>
+            <div class="flex justify-center mt-2">
+                <div class="bg-white rounded-full px-4 py-1 shadow-md">
+                    <span id="streak-counter" class="text-sm font-semibold">You're on a 3-day streak! 🔥</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- To-Do List Section -->
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Today's To-Do</h2>
+                    <div class="flex space-x-2">
+                        <button id="add-task-btn" class="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors">
+                            <i class="bi bi-plus text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <input id="new-task-input" type="text" placeholder="Add a new task..." class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hidden">
+                    
+                    <div id="category-selector" class="mt-2 flex space-x-2 hidden">
+                        <span class="category-option cursor-pointer px-3 py-1 rounded-full text-sm bg-gray-200 hover:bg-blue-100" data-category="study">Study</span>
+                        <span class="category-option cursor-pointer px-3 py-1 rounded-full text-sm bg-gray-200 hover:bg-green-100" data-category="practice">Practice</span>
+                        <span class="category-option cursor-pointer px-3 py-1 rounded-full text-sm bg-gray-200 hover:bg-orange-100" data-category="workout">Workout</span>
+                        <span class="category-option cursor-pointer px-3 py-1 rounded-full text-sm bg-gray-200 hover:bg-purple-100" data-category="other">Other</span>
+                    </div>
+                </div>
+
+                <ul id="tasks-list" class="space-y-2">
+                    <li class="task-item flex items-center p-3 bg-gray-50 rounded-lg">
+                        <div class="drag-handle mr-2 text-gray-400 hover:text-gray-600">
+                            <i class="bi bi-grip-vertical"></i>
+                        </div>
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-500 rounded mr-3">
+                        <span class="flex-grow">Complete physics assignment</span>
+                        <span class="category-pill cat-study mr-2">Study</span>
+                        <button class="text-gray-500 hover:text-red-500"><i class="bi bi-trash"></i></button>
+                    </li>
+                    <li class="task-item flex items-center p-3 bg-gray-50 rounded-lg">
+                        <div class="drag-handle mr-2 text-gray-400 hover:text-gray-600">
+                            <i class="bi bi-grip-vertical"></i>
+                        </div>
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-500 rounded mr-3">
+                        <span class="flex-grow">30 min cardio</span>
+                        <span class="category-pill cat-workout mr-2">Workout</span>
+                        <button class="text-gray-500 hover:text-red-500"><i class="bi bi-trash"></i></button>
+                    </li>
+                    <li class="task-item flex items-center p-3 bg-gray-50 rounded-lg">
+                        <div class="drag-handle mr-2 text-gray-400 hover:text-gray-600">
+                            <i class="bi bi-grip-vertical"></i>
+                        </div>
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-500 rounded mr-3">
+                        <span class="flex-grow">Practice coding problems</span>
+                        <span class="category-pill cat-practice mr-2">Practice</span>
+                        <button class="text-gray-500 hover:text-red-500"><i class="bi bi-trash"></i></button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Calendar + Streak Tracker Section -->
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Progress Calendar</h2>
+                
+                <div class="flex justify-between items-center mb-4">
+                    <button id="prev-month" class="text-gray-500 hover:text-gray-700">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <h3 id="current-month" class="text-lg font-medium">September 2023</h3>
+                    <button id="next-month" class="text-gray-500 hover:text-gray-700">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 mb-2 text-center">
+                    <div class="text-sm font-medium text-gray-500">S</div>
+                    <div class="text-sm font-medium text-gray-500">M</div>
+                    <div class="text-sm font-medium text-gray-500">T</div>
+                    <div class="text-sm font-medium text-gray-500">W</div>
+                    <div class="text-sm font-medium text-gray-500">T</div>
+                    <div class="text-sm font-medium text-gray-500">F</div>
+                    <div class="text-sm font-medium text-gray-500">S</div>
+                </div>
+
+                <div id="calendar-days" class="grid grid-cols-7 gap-1">
+                    <!-- Calendar days will be generated here -->
+                </div>
+
+                <div id="day-details" class="mt-6 hidden">
+                    <h3 id="selected-date" class="text-lg font-medium mb-2">September 15, 2023</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+                            <span class="text-sm">Study: <span class="font-medium">Completed</span></span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+                            <span class="text-sm">Practice: <span class="font-medium">Completed</span></span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>
+                            <span class="text-sm">Workout: <span class="font-medium">Skipped</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6-Subject Syllabus Tracker Section -->
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Syllabus Tracker</h2>
+                    <button id="add-subject-btn" class="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors">
+                        <i class="bi bi-plus text-xl"></i>
+                    </button>
+                </div>
+
+                <div id="add-subject-form" class="mb-4 hidden">
+                    <input type="text" id="new-subject-input" placeholder="Subject name..." class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
+                    <div class="flex justify-end">
+                        <button id="save-subject-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Add Subject</button>
+                    </div>
+                </div>
+
+                <div id="subjects-container" class="space-y-4">
+                    <!-- Physics Subject -->
+                    <div class="subject-card border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-gray-100 p-3 flex justify-between items-center">
+                            <h3 class="font-medium">Physics</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-500">2/5 completed</span>
+                                <button class="text-gray-500 hover:text-blue-500 add-topic-btn">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                                <button class="text-gray-500 hover:text-gray-700 toggle-topics-btn">
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="topic-list p-3">
+                            <div class="add-topic-form hidden mb-2">
+                                <input type="text" placeholder="New topic..." class="w-full p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <ul class="space-y-1">
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 rounded mr-2" checked>
+                                        <span class="text-sm line-through">Kinematics</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <select class="text-xs bg-gray-100 border border-gray-300 rounded px-1 py-0.5">
+                                            <option value="completed">Completed</option>
+                                            <option value="in-progress">In Progress</option>
+                                            <option value="revision">Revision Needed</option>
+                                        </select>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 rounded mr-2" checked>
+                                        <span class="text-sm line-through">Newton's Laws</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <select class="text-xs bg-gray-100 border border-gray-300 rounded px-1 py-0.5">
+                                            <option value="completed">Completed</option>
+                                            <option value="in-progress">In Progress</option>
+                                            <option value="revision">Revision Needed</option>
+                                        </select>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 rounded mr-2">
+                                        <span class="text-sm">Work and Energy</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <select class="text-xs bg-gray-100 border border-gray-300 rounded px-1 py-0.5">
+                                            <option value="completed">Completed</option>
+                                            <option value="in-progress" selected>In Progress</option>
+                                            <option value="revision">Revision Needed</option>
+                                        </select>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 rounded mr-2">
+                                        <span class="text-sm">Gravitation</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <select class="text-xs bg-gray-100 border border-gray-300 rounded px-1 py-0.5">
+                                            <option value="completed">Completed</option>
+                                            <option value="in-progress">In Progress</option>
+                                            <option value="revision" selected>Revision Needed</option>
+                                        </select>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 rounded mr-2">
+                                        <span class="text-sm">Electromagnetism</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <select class="text-xs bg-gray-100 border border-gray-300 rounded px-1 py-0.5">
+                                            <option value="completed">Completed</option>
+                                            <option value="in-progress">In Progress</option>
+                                            <option value="revision">Revision Needed</option>
+                                        </select>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Chemistry Subject -->
+                    <div class="subject-card border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-gray-100 p-3 flex justify-between items-center">
+                            <h3 class="font-medium">Chemistry</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-500">1/4 completed</span>
+                                <button class="text-gray-500 hover:text-blue-500 add-topic-btn">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                                <button class="text-gray-500 hover:text-gray-700 toggle-topics-btn">
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="topic-list p-3">
+                            <div class="add-topic-form hidden mb-2">
+                                <input type="text" placeholder="New topic..." class="w-full p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <ul class="space-y-1">
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 rounded mr-2" checked>
+                                        <span class="text-sm line-through">Periodic Table</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <select class="text-xs bg-gray-100 border border-gray-300 rounded px-1 py-0.5">
+                                            <option value="completed">Completed</option>
+                                            <option value="in-progress">In Progress</option>
+                                            <option value="revision">Revision Needed</option>
+                                        </select>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 rounded mr-2">
+                                        <span class="text-sm">Chemical Bonding</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <select class="text-xs bg-gray-100 border border-gray-300 rounded px-1 py-0.5">
+                                            <option value="completed">Completed</option>
+                                            <option value="in-progress" selected>In Progress</option>
+                                            <option value="revision">Revision Needed</option>
+                                        </select>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 rounded mr-2">
+                                        <span class="text-sm">Acid-Base Reactions</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <select class="text-xs bg-gray-100 border border-gray-300 rounded px-1 py-0.5">
+                                            <option value="completed">Completed</option>
+                                            <option value="in-progress">In Progress</option>
+                                            <option value="revision">Revision Needed</option>
+                                        </select>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 rounded mr-2">
+                                        <span class="text-sm">Organic Chemistry</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <select class="text-xs bg-gray-100 border border-gray-300 rounded px-1 py-0.5">
+                                            <option value="completed">Completed</option>
+                                            <option value="in-progress">In Progress</option>
+                                            <option value="revision">Revision Needed</option>
+                                        </select>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Mathematics Subject -->
+                    <div class="subject-card border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-gray-100 p-3 flex justify-between items-center">
+                            <h3 class="font-medium">Mathematics</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-500">3/6 completed</span>
+                                <button class="text-gray-500 hover:text-blue-500 add-topic-btn">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                                <button class="text-gray-500 hover:text-gray-700 toggle-topics-btn">
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="topic-list p-3 hidden">
+                            <div class="add-topic-form hidden mb-2">
+                                <input type="text" placeholder="New topic..." class="w-full p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <ul class="space-y-1">
+                                <!-- Topics will be added here -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Add more subjects here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Sortable for tasks
+            const tasksList = document.getElementById('tasks-list');
+            new Sortable(tasksList, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost'
+            });
+
+            // Add Task functionality
+            const addTaskBtn = document.getElementById('add-task-btn');
+            const newTaskInput = document.getElementById('new-task-input');
+            const categorySelector = document.getElementById('category-selector');
+
+            addTaskBtn.addEventListener('click', function() {
+                newTaskInput.classList.toggle('hidden');
+                categorySelector.classList.toggle('hidden');
+                if (!newTaskInput.classList.contains('hidden')) {
+                    newTaskInput.focus();
+                }
+            });
+
+            // Set up task category selection
+            const categoryOptions = document.querySelectorAll('.category-option');
+            let selectedCategory = null;
+
+            categoryOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove selection from all options
+                    categoryOptions.forEach(opt => opt.classList.remove('bg-blue-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100'));
+                    option.classList.remove('bg-gray-200');
+                    
+                    // Add selection to clicked option
+                    selectedCategory = this.dataset.category;
+                    if (selectedCategory === 'study') {
+                        option.classList.add('bg-blue-100');
+                    } else if (selectedCategory === 'practice') {
+                        option.classList.add('bg-green-100');
+                    } else if (selectedCategory === 'workout') {
+                        option.classList.add('bg-orange-100');
+                    } else {
+                        option.classList.add('bg-purple-100');
+                    }
+                });
+            });
+
+            // Handle task creation
+            newTaskInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && this.value.trim() !== '') {
+                    addNewTask(this.value.trim(), selectedCategory || 'other');
+                    this.value = '';
+                    newTaskInput.classList.add('hidden');
+                    categorySelector.classList.add('hidden');
+                    
+                    // Reset category selection
+                    categoryOptions.forEach(opt => {
+                        opt.classList.remove('bg-blue-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100');
+                        opt.classList.add('bg-gray-200');
+                    });
+                    selectedCategory = null;
+                }
+            });
+
+            // Function to add new task
+            function addNewTask(taskText, category) {
+                const li = document.createElement('li');
+                li.className = 'task-item flex items-center p-3 bg-gray-50 rounded-lg';
+                
+                // Category class
+                let catClass = '';
+                if (category === 'study') {
+                    catClass = 'cat-study';
+                } else if (category === 'practice') {
+                    catClass = 'cat-practice';
+                } else if (category === 'workout') {
+                    catClass = 'cat-workout';
+                } else {
+                    catClass = 'cat-other';
+                }
+                
+                li.innerHTML = `
+                    <div class="drag-handle mr-2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-grip-vertical"></i>
+                    </div>
+                    <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-500 rounded mr-3">
+                    <span class="flex-grow">${taskText}</span>
+                    <span class="category-pill ${catClass} mr-2">${category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                    <button class="text-gray-500 hover:text-red-500"><i class="bi bi-trash"></i></button>
+                `;
+                
+                // Add delete functionality
+                const deleteBtn = li.querySelector('button');
+                deleteBtn.addEventListener('click', function() {
+                    li.remove();
+                });
+                
+                // Add checkbox functionality
+                const checkbox = li.querySelector('input[type="checkbox"]');
+                const taskSpan = li.querySelector('span.flex-grow');
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        taskSpan.classList.add('line-through', 'text-gray-400');
+                    } else {
+                        taskSpan.classList.remove('line-through', 'text-gray-400');
+                    }
+                });
+                
+                tasksList.appendChild(li);
+            }
+
+            // Existing tasks delete and checkbox functionality
+            document.querySelectorAll('.task-item button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.task-item').remove();
+                });
+            });
+            
+            document.querySelectorAll('.task-item input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const taskSpan = this.nextElementSibling;
+                    if (this.checked) {
+                        taskSpan.classList.add('line-through', 'text-gray-400');
+                    } else {
+                        taskSpan.classList.remove('line-through', 'text-gray-400');
+                    }
+                });
+            });
+
+            // Calendar functionality
+            const calendarDays = document.getElementById('calendar-days');
+            const currentMonthElem = document.getElementById('current-month');
+            const prevMonthBtn = document.getElementById('prev-month');
+            const nextMonthBtn = document.getElementById('next-month');
+            const dayDetails = document.getElementById('day-details');
+            const selectedDateElem = document.getElementById('selected-date');
+            
+            let currentDate = new Date();
+            let currentMonth = currentDate.getMonth();
+            let currentYear = currentDate.getFullYear();
+            
+            function generateCalendar(month, year) {
+                calendarDays.innerHTML = '';
+                
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDay = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                
+                currentMonthElem.textContent = `${new Intl.DateTimeFormat('en-US', { month: 'long' }). format(firstDay)} ${year}`;
+                
+                // Add empty cells for days before the first day of the month
+                for (let i = 0; i < startingDay; i++) {
+                    const emptyCell = document.createElement('div');
+                    calendarDays.appendChild(emptyCell);
+                }
+                
+                // Generate days
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'calendar-day';
+                    dayCell.textContent = day;
+                    
+                    // Assign random red or green for demo purposes
+                    // In a real app, this would be based on task completion data
+                    if (Math.random() > 0.3) {
+                        dayCell.classList.add('day-green');
+                    } else {
+                        dayCell.classList.add('day-red');
+                    }
+                    
+                    // Mark today
+                    if (day === currentDate.getDate() && month === currentDate.getMonth() && year === currentDate.getFullYear()) {
+                        dayCell.classList.add('ring-2', 'ring-blue-500');
+                    }
+                    
+                    // Add click event
+                    dayCell.addEventListener('click', function() {
+                        document.querySelectorAll('.calendar-day').forEach(cell => {
+                            cell.classList.remove('ring-2', 'ring-blue-500');
+                        });
+                        this.classList.add('ring-2', 'ring-blue-500');
+                        
+                        // Show day details
+                        dayDetails.classList.remove('hidden');
+                        const selectedDate = new Date(year, month, day);
+                        selectedDateElem.textContent = selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                    });
+                    
+                    calendarDays.appendChild(dayCell);
+                }
+            }
+            
+            // Initialize calendar
+            generateCalendar(currentMonth, currentYear);
+            
+            // Previous month button
+            prevMonthBtn.addEventListener('click', function() {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                generateCalendar(currentMonth, currentYear);
+                dayDetails.classList.add('hidden');
+            });
+            
+            // Next month button
+            nextMonthBtn.addEventListener('click', function() {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                generateCalendar(currentMonth, currentYear);
+                dayDetails.classList.add('hidden');
+            });
+
+            // Syllabus Tracker functionality
+            const addSubjectBtn = document.getElementById('add-subject-btn');
+            const addSubjectForm = document.getElementById('add-subject-form');
+            const newSubjectInput = document.getElementById('new-subject-input');
+            const saveSubjectBtn = document.getElementById('save-subject-btn');
+            const subjectsContainer = document.getElementById('subjects-container');
+            
+            // Show/hide add subject form
+            addSubjectBtn.addEventListener('click', function() {
+                addSubjectForm.classList.toggle('hidden');
+                if (!addSubjectForm.classList.contains('hidden')) {
+                    newSubjectInput.focus();
+                }
+            });
+            
+            // Add new subject
+            saveSubjectBtn.addEventListener('click', function() {
+                const subjectName = newSubjectInput.value.trim();
+                if (subjectName !== '') {
+                    addNewSubject(subjectName);
+                    newSubjectInput.value = '';
+                    addSubjectForm.classList.add('hidden');
+                }
+            });
+            
+            // Add new subject with Enter key
+            newSubjectInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && this.value.trim() !== '') {
+                    addNewSubject(this.value.trim());
+                    this.value = '';
+                    addSubjectForm.classList.add('hidden');
+                }
+            });
+            
+            function addNewSubject(subjectName) {
+                const subjectCard = document.createElement('div');
+                subjectCard.className = 'subject-card border border-gray-200 rounded-lg overflow-hidden';
+                
+                subjectCard.innerHTML = `
+                    <div class="bg-gray-100 p-3 flex justify-between items-center">
+                        <h3 class="font-medium">${subjectName}</h3>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-gray-500">0/0 completed</span>
+                            <button class="text-gray-500 hover:text-blue-500 add-topic-btn">
+                                <i class="bi bi-plus-circle"></i>
+                            </button>
+                            <button class="text-gray-500 hover:text-gray-700 toggle-topics-btn">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="topic-list p-3">
+                        <div class="add-topic-form hidden mb-2">
+                            <input type="text" placeholder="New topic..." class="w-full p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        <ul class="space-y-1">
+                            <!-- Topics will be added here -->
+                        </ul>
+                    </div>
+                `;
+                
+                // Add event listeners
+                const toggleBtn = subjectCard.querySelector('.toggle-topics-btn');
+                const topicList = subjectCard.querySelector('.topic-list');
+                toggleBtn.addEventListener('click', function() {
+                    topicList.classList.toggle('hidden');
+                    this.querySelector('i').classList.toggle('bi-chevron-down');
+                    this.querySelector('i').classList.toggle('bi-chevron-up');
+                });
+                
+                const addTopicBtn = subjectCard.querySelector('.add-topic-btn');
+                const addTopicForm = subjectCard.querySelector('.add-topic-form');
+                const topicInput = subjectCard.querySelector('.add-topic-form input');
+                
+                addTopicBtn.addEventListener('click', function() {
+                    addTopicForm.classList.toggle('hidden');
+                    if (!addTopicForm.classList.contains('hidden')) {
+                        topicInput.focus();
+                    }
+                });
+                
+                topicInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && this.value.trim() !== '') {
+                        addNewTopic(subjectCard, this.value.trim());
+                        this.value = '';
+                        addTopicForm.classList.add('hidden');
+                        updateTopicCount(subjectCard);
+                    }
+                });
+                
+                subjectsContainer.appendChild(subjectCard);
+            }
+            
+            function addNewTopic(subjectCard, topicName) {
+                const topicList = subjectCard.querySelector('.topic-list ul');
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between';
+                
+                li.innerHTML = `
+                    <div class="flex items-center">
+                        <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 rounded mr-2">
+                        <span class="text-sm">${topicName}</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <select class="text-xs bg-gray-100 border border-gray-300 rounded px-1 py-0.5">
+                            <option value="completed">Completed</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="revision">Revision Needed</option>
+                        </select>
+                    </div>
+                `;
+                
+                const checkbox = li.querySelector('input[type="checkbox"]');
+                const topicSpan = li.querySelector('span');
+                
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        topicSpan.classList.add('line-through');
+                    } else {
+                        topicSpan.classList.remove('line-through');
+                    }
+                    updateTopicCount(subjectCard);
+                });
+                
+                topicList.appendChild(li);
+            }
+            
+            // Update topic count
+            function updateTopicCount(subjectCard) {
+                const totalTopics = subjectCard.querySelectorAll('.topic-list ul li').length;
+                const completedTopics = subjectCard.querySelectorAll('.topic-list ul li input[type="checkbox"]:checked').length;
+                const countElem = subjectCard.querySelector('.text-xs.text-gray-500');
+                
+                countElem.textContent = `${completedTopics}/${totalTopics} completed`;
+            }
+            
+            // Set up toggle and add topic functionality for existing subject cards
+            document.querySelectorAll('.toggle-topics-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const topicList = this.closest('.subject-card').querySelector('.topic-list');
+                    topicList.classList.toggle('hidden');
+                    this.querySelector('i').classList.toggle('bi-chevron-down');
+                    this.querySelector('i').classList.toggle('bi-chevron-up');
+                });
+            });
+            
+            document.querySelectorAll('.add-topic-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const addTopicForm = this.closest('.subject-card').querySelector('.add-topic-form');
+                    addTopicForm.classList.toggle('hidden');
+                    if (!addTopicForm.classList.contains('hidden')) {
+                        addTopicForm.querySelector('input').focus();
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.add-topic-form input').forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && this.value.trim() !== '') {
+                        const subjectCard = this.closest('.subject-card');
+                        addNewTopic(subjectCard, this.value.trim());
+                        this.value = '';
+                        this.closest('.add-topic-form').classList.add('hidden');
+                        updateTopicCount(subjectCard);
+                    }
+                });
+            });
+            
+            // Set up checkbox functionality for existing topics
+            document.querySelectorAll('.topic-list input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const topicSpan = this.nextElementSibling;
+                    if (this.checked) {
+                        topicSpan.classList.add('line-through');
+                    } else {
+                        topicSpan.classList.remove('line-through');
+                    }
+                    updateTopicCount(this.closest('.subject-card'));
+                });
+            });
+            
+            // Initialize topic counts
+            document.querySelectorAll('.subject-card').forEach(card => {
+                updateTopicCount(card);
+            });
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
